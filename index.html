@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Hệ thống Dự báo Dòng tiền HĐV–CV | BIDV Cẩm Phả</title>
 
-<!-- Firebase -->
+<!-- Google Sheets Backend -->
 
 
 
@@ -849,7 +849,7 @@ function pageDashboard() {
   </div>
   
   ${currentUser.role === 'dauMoi' ? `<div class="alert alert-info">📌 Bạn đang đăng nhập với quyền <strong>Đầu mối Chi nhánh</strong>. Sau khi push dữ liệu nền, các phòng sẽ thấy danh sách KH để nhập dự báo.</div>` : `<div class="alert alert-info">📌 Đơn vị: <strong>${currentUser.ten}</strong>. Vui lòng nhập dự báo biến động HĐV và CV trong kỳ theo dữ liệu đã được đầu mối chi nhánh gửi xuống.</div>`}
-  ${!firebaseOK ? `<div class="alert alert-warn">⚠️ <strong>Chưa kết nối Firebase</strong> – Liên hệ quản trị viên (campha) kiểm tra cấu hình Apps Script URL trong file index.html.</div>` : `<div class="alert alert-success">✅ Đã kết nối Google Sheets – dữ liệu đồng bộ. <button class="btn btn-outline btn-sm" style="margin-left:8px" onclick="manualSync()">🔄 Đồng bộ ngay</button></div>`}
+  ${!firebaseOK ? `<div class="alert alert-warn">⚠️ <strong>Chưa kết nối Google Sheets</strong> – Liên hệ quản trị viên (campha) kiểm tra Apps Script URL trong file index.html.</div>` : `<div class="alert alert-success">✅ Đã kết nối Google Sheets – dữ liệu đồng bộ. <button class="btn btn-outline btn-sm" style="margin-left:8px" onclick="manualSync()">🔄 Đồng bộ ngay</button></div>`}
   
   <div class="stat-row">
     <div class="stat-box">
@@ -2117,12 +2117,12 @@ function pageSetting() {
   
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
     <div class="card">
-      <div class="card-header"><div class="card-title">🔥 Trạng thái Firebase</div></div>
+      <div class="card-header"><div class="card-title">☁️ Trạng thái kết nối</div></div>
       <div class="card-body">
         <div class="alert ${firebaseOK?'alert-success':'alert-warn'}">
           ${firebaseOK
-            ? '✅ Đã kết nối Firebase – đồng bộ realtime · Project: <strong>' + firebaseConfig.projectId + '</strong>'
-            : '⚠️ Chưa kết nối Firebase – liên hệ quản trị viên để kiểm tra cấu hình.'}
+            ? '✅ Đã kết nối Google Sheets – dữ liệu đồng bộ'
+            : '⚠️ Chưa kết nối Google Sheets – liên hệ quản trị viên kiểm tra Apps Script URL.'}
         </div>
         ${firebaseOK ? `
         <div style="font-size:12px;color:var(--text-light);margin-top:8px">
