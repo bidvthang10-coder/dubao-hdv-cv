@@ -513,7 +513,7 @@ tfoot td { background: #eef3fa; font-weight: 700; border-top: 2px solid var(--bi
 // ═══════════════════════════════════════════════════════════════
 // GOOGLE SHEETS BACKEND
 // ═══════════════════════════════════════════════════════════════
-var GS_URL    = 'https://script.google.com/macros/s/AKfycbxliWJv2BNaQGMvnHH47_gOAMk554AFBSq0DVn7RpzW4C0cqxLm8mbyqkTVsXnfuv8t/exec';
+var GS_URL    = 'https://script.google.com/macros/s/AKfycbxtn4Ax-z39w0Og-cUo6tcPtRvDkxgEmsyuz5jCYWGOhCS74z7Mp4uf0NgvRx_kZT4K/exec';
 var GS_SECRET = 'bidvcampha2026';
 var firebaseOK = false;
 var db = null;
@@ -617,38 +617,33 @@ function setupRealtimeListeners() {
 
 
 // ─── INIT Google Sheets ───
-function initFirebase() { // giữ tên cho compatibility
+function initFirebase() {
   if (!GS_URL || GS_URL.indexOf('DIEN_') === 0) {
-    console.warn('[GS] URL chưa được cấu hình – chạy offline');
     firebaseOK = false;
     renderPage('dashboard');
     toast('ℹ️ Chưa cấu hình Google Sheets – đang dùng localStorage');
     return;
   }
-  // Kiểm tra kết nối
-  gsCall({ action: 'ping' }).then(function(res) {
-    if (res.ok) {
-      firebaseOK = true;
-      console.log('[GS] Connected:', res.message);
-      // Sync dữ liệu về localStorage
-      storage.syncFromSheets(function(ok, n) {
-        renderPage('dashboard');
-        var msg = n > 0
-          ? '✅ Google Sheets kết nối – đồng bộ ' + n + ' bản ghi'
-          : '✅ Google Sheets kết nối – chưa có dữ liệu';
-        toast(msg);
-        // Cập nhật conn dot
-        var dot = document.querySelector('.conn-dot');
-        if (dot) { dot.style.background = '#00c853'; dot.title = 'Google Sheets'; }
-      });
-    } else {
-      console.warn('[GS] Ping failed:', res.error);
+  // Ping kiểm tra kết nối (dùng callback, không dùng .then)
+  gsCall({ action: 'ping' }, function(err, res) {
+    if (err || !res || !res.ok) {
+      console.warn('[GS] Ping failed:', err ? err.message : (res && res.error));
+      firebaseOK = false;
       renderPage('dashboard');
-      toast('⚠️ Không kết nối được Google Sheets: ' + (res.error||''));
+      toast('⚠️ Không kết nối được Google Sheets. Chạy offline.');
+      return;
     }
-  }).catch(function(e) {
-    console.warn('[GS] Init error:', e.message);
-    renderPage('dashboard');
+    firebaseOK = true;
+    console.log('[GS] Connected:', res.message);
+    // Sync dữ liệu từ Sheets về localStorage
+    storage.syncFromSheets(function(ok, n) {
+      renderPage('dashboard');
+      var dot = document.querySelector('.conn-dot');
+      if (dot) { dot.style.background = '#00c853'; dot.title = 'Google Sheets'; }
+      toast(ok
+        ? '✅ Google Sheets kết nối – đồng bộ ' + n + ' bản ghi'
+        : '⚠️ Kết nối OK nhưng không sync được dữ liệu');
+    });
   });
 }
 
