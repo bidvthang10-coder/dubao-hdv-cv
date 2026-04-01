@@ -513,7 +513,7 @@ tfoot td { background: #eef3fa; font-weight: 700; border-top: 2px solid var(--bi
 // ═══════════════════════════════════════════════════════════════
 // GOOGLE SHEETS BACKEND
 // ═══════════════════════════════════════════════════════════════
-var GS_URL    = 'https://script.google.com/macros/s/AKfycbyomUnNMW36iAE9eyb2io3i2wu4AMCNPG6Y1mkHhVV7DFuoKqNfP3geZWuZbJNZqOJE/exec';
+var GS_URL    = 'https://script.google.com/macros/s/AKfycbxliWJv2BNaQGMvnHH47_gOAMk554AFBSq0DVn7RpzW4C0cqxLm8mbyqkTVsXnfuv8t/exec';
 var GS_SECRET = 'bidvcampha2026';
 var firebaseOK = false;
 var db = null;
@@ -651,6 +651,34 @@ function initFirebase() { // giữ tên cho compatibility
     renderPage('dashboard');
   });
 }
+
+
+// ─── STATE ───
+let currentUser = { donVi: '', role: '', ten: '' };
+let currentKy   = { loai: 'thang', nam: new Date().getFullYear(), thang: new Date().getMonth()+1, quy: Math.ceil((new Date().getMonth()+1)/3) };
+let appData     = { guiTSC: null };
+
+// ─── MASTER DATA ───
+const PHONG_LIST = [
+  { ma:'KHDN',  ten:'Phòng KHDN',      mpa:'111100441021' },
+  { ma:'KHCN',  ten:'Phòng KHCN',      mpa:'112100441121' },
+  { ma:'KHUT',  ten:'Phòng KHƯT',      mpa:'112100441122' },
+  { ma:'PGD1',  ten:'PGD Cẩm Thủy',    mpa:'112100441155' },
+  { ma:'PGD2',  ten:'PGD Cẩm Phú',     mpa:'112100441157' },
+  { ma:'PGD3',  ten:'PGD Mông Dương',   mpa:'112100441158' },
+  { ma:'PGD4',  ten:'PGD Quang Hanh',   mpa:'112100441159' },
+  { ma:'PGD5',  ten:'PGD Cẩm Bình',    mpa:'112100441160' },
+  { ma:'PGD6',  ten:'PGD Vân Đồn',     mpa:'112100441161' },
+  { ma:'CHUNG', ten:'Chung (CN)',        mpa:'999999'       },
+];
+const MPA_TO_MA = {};
+PHONG_LIST.forEach(p => { MPA_TO_MA[p.mpa] = p.ma; });
+const DOI_TUONG     = ['KHCN','KHDNL','KHDN NVV','FDI','ĐCTC'];
+const DOI_TUONG_HDV = ['KHCN','KHDNL','SME','FDI','DCTC'];
+const DOI_TUONG_CV  = ['KHCN','KHDNL','SME','FDI'];
+const KY_HAN_CV     = ['NH','TDH'];
+const TRANG_THAI    = { cho:'Chờ nhập', dang:'Đang nhập', gui:'Đã gửi', duyet:'Đã phê duyệt' };
+const PW            = 'bidv2026';
 
 
 function getKyKey() {
