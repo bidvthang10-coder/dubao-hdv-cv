@@ -2126,9 +2126,7 @@ function pageSetting() {
         </div>
         ${firebaseOK ? `
         <div style="font-size:12px;color:var(--text-light);margin-top:8px">
-          <div>🔗 Project: <strong>${firebaseConfig.projectId}</strong></div>
-          <div style="margin-top:4px">🗄️ Database: <strong>${firebaseConfig.databaseURL.replace('https://','').replace('.firebasedatabase.app','')}</strong></div>
-          <div style="margin-top:4px">👤 UID: <strong>${typeof firebase !== "undefined" && firebase.auth && firebase.auth().currentUser ? firebase.auth().currentUser.uid.slice(0,12)+'...' : 'n/a'}</strong></div>
+          <div>🔗 Apps Script: <strong>${GS_URL.slice(0,50)}...</strong></div>
         </div>` : ''}
       </div>
     </div>
