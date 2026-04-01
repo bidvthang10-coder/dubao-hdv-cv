@@ -1315,16 +1315,31 @@ function aggregateByCIF(rows, loai) {
 }
 
 function pushXuongPhong() {
+  // Model mới: dữ liệu lưu theo key hdv_ky_phong_dt và cv_ky_phong_dt_kh
+  var ky = getKyKey();
+  var DTS_HDV = ['KHCN','KHDNL','SME','FDI','DCTC'];
+  var DTS_CV  = ['KHCN','KHDNL','SME','FDI'];
+  var KHS     = ['NH','TDH'];
 
-  PHONG_LIST.forEach(p => {
-    const soHDV = nenHDV.filter(r => r.phong === p.ma).length;
-    const soCV = nenCV.filter(r => r.phong === p.ma).length;
-    if (soHDV > 0 || soCV > 0) {
-      savePhongStatus(p.ma, 'cho', 'cho', soHDV);
+  PHONG_LIST.forEach(function(p) {
+    // Kiểm tra có dữ liệu HĐV không
+    var hasHDV = DTS_HDV.some(function(dt) {
+      var d = JSON.parse(storage.get('hdv_'+ky+'_'+p.ma+'_'+dt)||'{}');
+      return (d.kkh_dau || 0) + (d.ckh_dau || 0) > 0;
+    });
+    // Kiểm tra có dữ liệu CV không
+    var hasCV = DTS_CV.some(function(dt) {
+      return KHS.some(function(kh) {
+        var d = JSON.parse(storage.get('cv_'+ky+'_'+p.ma+'_'+dt+'_'+kh)||'{}');
+        return (d.dn_dau || 0) > 0;
+      });
+    });
+    if (hasHDV || hasCV) {
+      savePhongStatus(p.ma, 'cho', 'cho', 0);
     }
   });
   toast('✅ Đã đẩy dữ liệu nền xuống các Phòng. Thông báo cho từng đơn vị nhập dự báo.');
-  setTimeout(() => renderPage('push'), 500);
+  setTimeout(function(){ renderPage('push'); }, 500);
 }
 
 // ─── NHAP DU BAO HDV ───
@@ -1621,23 +1636,7 @@ function saveKhMoiCV(input) {
 
 // saveDuBaoCV_legacy removed
 
-function calcDuNoCuoiKy(r, saved) {
-  const tong    = parseFloat(r['Dư nợ nội bảng (CQĐ)']||0);
-  const den_han = parseFloat(r['DAOHAN_TATTOAN']||0);
-  const tra_goc = parseFloat(r['TRANO_THEOLICH']||0);
-  const tra_th  = parseFloat(saved.tra_truochan||0);       // key mới
-  const gn_ck   = parseFloat(saved.gn_camket||0);          // key mới
-  const gn_moi  = parseFloat(saved.gn_moi||0);             // key mới
-
-  if ((saved.xac_nhan||'Đúng') === 'Đúng') {
-    // Đúng hạn: = Tổng dư nợ - Đến hạn TT - Trả gốc ĐK - Trả trước hạn + GN cam kết + GN mới
-    return tong - den_han - tra_goc - tra_th + gn_ck + gn_moi;
-  } else {
-    // Điều chỉnh: thay đến hạn TT bằng số đầu mối xác nhận
-    const dc = parseFloat(saved.dc_denhan||den_han);        // key mới
-    return tong - dc - tra_th + gn_ck + gn_moi;
-  }
-}
+// calcDuNoCuoiKy removed
 
 // ─── HELPERS TRANG THAI ───
 function renderStatusCell(st, phongMa) {
