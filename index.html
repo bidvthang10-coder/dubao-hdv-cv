@@ -511,94 +511,108 @@ tfoot td { background: #eef3fa; font-weight: 700; border-top: 2px solid var(--bi
 <script>
 // ─── FIREBASE CONFIG ───
 // ═══════════════════════════════════════════════════════════════
-// GOOGLE SHEETS BACKEND - thay thế Firebase
-// Điền URL Apps Script sau khi deploy
+// GOOGLE SHEETS BACKEND
 // ═══════════════════════════════════════════════════════════════
-const GS_URL    = 'https://script.google.com/macros/s/AKfycbzd5nVKq5YlZW2Ua_vIgnwRu6gIByhysTtpzsPJjtg2Int7PtdLmTmyqe0Pcqv2ZHjP/exec'; // https://script.google.com/macros/s/.../exec
-const GS_SECRET = 'bidvcampha2026';
-let   firebaseOK = false; // giữ tên biến cho compatibility
-let   db = null;           // không dùng nhưng giữ cho compatibility
-const _fbListeners = {};
+var GS_URL    = 'https://script.google.com/macros/s/AKfycbyomUnNMW36iAE9eyb2io3i2wu4AMCNPG6Y1mkHhVV7DFuoKqNfP3geZWuZbJNZqOJE/exec';
+var GS_SECRET = 'bidvcampha2026';
+var firebaseOK = false;
+var db = null;
+var _fbListeners = {};
 
-// ── Gọi Apps Script ──
-async function gsCall(params) {
-  try {
-    const url  = GS_URL + '?secret=' + GS_SECRET + '&' + new URLSearchParams(params).toString();
-    const resp = await fetch(url);
-    const data = await resp.json();
-    return data;
-  } catch(e) {
-    console.warn('[GS] Error:', e.message);
-    return { ok: false, error: e.message };
-  }
+// Gọi Apps Script (callback-based, không dùng async/await)
+function gsCall(params, callback) {
+  var qs = '?secret=' + encodeURIComponent(GS_SECRET);
+  Object.keys(params).forEach(function(k) {
+    qs += '&' + encodeURIComponent(k) + '=' + encodeURIComponent(params[k]);
+  });
+  var url = GS_URL + qs;
+  var xhr = new XMLHttpRequest();
+  xhr.open('GET', url, true);
+  xhr.onload = function() {
+    try {
+      var data = JSON.parse(xhr.responseText);
+      if (callback) callback(null, data);
+    } catch(e) {
+      if (callback) callback(e, null);
+    }
+  };
+  xhr.onerror = function() {
+    if (callback) callback(new Error('Network error'), null);
+  };
+  xhr.send();
 }
 
-async function gsPost(body) {
-  try {
-    const resp = await fetch(GS_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...body, secret: GS_SECRET })
-    });
-    const data = await resp.json();
-    return data;
-  } catch(e) {
-    console.warn('[GS] POST Error:', e.message);
-    return { ok: false, error: e.message };
-  }
+// Gọi Apps Script POST (batch write)
+function gsPost(bodyObj, callback) {
+  bodyObj.secret = GS_SECRET;
+  var xhr = new XMLHttpRequest();
+  xhr.open('POST', GS_URL, true);
+  xhr.setRequestHeader('Content-Type', 'text/plain'); // tránh CORS preflight
+  xhr.onload = function() {
+    try {
+      var data = JSON.parse(xhr.responseText);
+      if (callback) callback(null, data);
+    } catch(e) {
+      if (callback) callback(e, null);
+    }
+  };
+  xhr.onerror = function() {
+    if (callback) callback(new Error('Network error'), null);
+  };
+  xhr.send(JSON.stringify(bodyObj));
 }
 
 // ── Storage layer ──
-const storage = {
-  get(key) {
+var storage = {
+  get: function(key) {
     return localStorage.getItem(key);
   },
 
-  set(key, value) {
+  set: function(key, value) {
     localStorage.setItem(key, value);
-    // Ghi lên Sheets async
     if (firebaseOK) {
-      gsCall({ action:'set', key:key, value:value, user:currentUser.donVi||'unknown' })
-        .catch(e => console.warn('[GS set err]', key, e.message));
+      gsCall({ action:'set', key:key, value:value, user:currentUser.donVi||'unknown' }, function(err, res) {
+        if (err) console.warn('[GS set err]', key, err.message);
+      });
     }
   },
 
-  remove(key) {
+  remove: function(key) {
     localStorage.removeItem(key);
     if (firebaseOK) {
-      gsCall({ action:'delete', key:key })
-        .catch(e => console.warn('[GS rm err]', key, e.message));
+      gsCall({ action:'delete', key:key }, function(err) {
+        if (err) console.warn('[GS rm err]', key);
+      });
     }
   },
 
-  _fbKey(key) { return key; }, // compat
+  _fbKey: function(key) { return key; },
 
-  // Sync toàn bộ từ Sheets về localStorage
-  async syncFromSheets(onDone) {
-    if (!firebaseOK) { if(onDone) onDone(false,0); return; }
-    try {
-      const res = await gsCall({ action:'getAll' });
-      if (!res.ok) { if(onDone) onDone(false,0); return; }
-      let n = 0;
-      Object.entries(res.data || {}).forEach(([k,v]) => {
-        if (v !== null && v !== undefined) {
-          localStorage.setItem(k, v);
+  // Sync từ Sheets về localStorage
+  syncFromSheets: function(onDone) {
+    if (!firebaseOK) { if (onDone) onDone(false, 0); return; }
+    gsCall({ action:'getAll' }, function(err, res) {
+      if (err || !res || !res.ok) {
+        console.warn('[GS sync error]', err ? err.message : (res && res.error));
+        if (onDone) onDone(false, 0);
+        return;
+      }
+      var n = 0;
+      var data = res.data || {};
+      Object.keys(data).forEach(function(k) {
+        if (data[k] !== null && data[k] !== undefined) {
+          localStorage.setItem(k, data[k]);
           n++;
         }
       });
       console.log('[GS] Synced', n, 'keys từ Sheets → localStorage');
       if (onDone) onDone(true, n);
-    } catch(e) {
-      console.warn('[GS sync error]', e.message);
-      if (onDone) onDone(false, 0);
-    }
+    });
   },
 };
 
 function setupRealtimeListeners() {
-  // Google Sheets không có realtime listeners
-  // Dữ liệu sync khi đăng nhập và khi bấm Refresh
-  console.log('[GS] No realtime listeners – manual sync only');
+  console.log('[GS] No realtime – dùng nút 🔄 Đồng bộ để cập nhật từ máy khác');
 }
 
 
