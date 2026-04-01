@@ -2462,28 +2462,21 @@ function confirmGuiTSC() {
 }
 
 // ─── HELPERS ───
-// Format số tiền: hiển thị theo tỷ đồng (2 chữ số thập phân)
-// Ví dụ: 1.234.567.890 → 1,23 tỷ  |  12.345.678 → 12,35 triệu
+// Format số tiền: phân cách nghìn bằng dấu chấm, thập phân bằng dấu phẩy
+// Ví dụ: 134363751580.72 → 134.363.751.580,72
 function fmt(n) {
   var v = parseFloat(n) || 0;
-  if (Math.abs(v) >= 1e9) {
-    return (v / 1e9).toLocaleString('vi-VN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' tỷ';
-  }
-  if (Math.abs(v) >= 1e6) {
-    return (v / 1e6).toLocaleString('vi-VN', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) + ' tr';
-  }
-  return v.toLocaleString('vi-VN', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+  // Bỏ phần thập phân nếu là số nguyên, giữ tối đa 2 chữ số nếu có lẻ
+  var hasDecimal = (v % 1 !== 0);
+  return v.toLocaleString('vi-VN', {
+    minimumFractionDigits: hasDecimal ? 2 : 0,
+    maximumFractionDigits: 2
+  });
 }
 function fmtCalc(n) {
   var v = parseFloat(n) || 0;
   var s = fmt(Math.abs(v));
-  if (v < 0) return '(' + s + ')';
-  return s;
-}
-// Format số đầy đủ có phân cách nghìn (dùng trong input/export)
-function fmtFull(n) {
-  var v = parseFloat(n) || 0;
-  return v.toLocaleString('vi-VN', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+  return v < 0 ? '(' + s + ')' : s;
 }
 
 function closeModal(id) { document.getElementById(id).classList.remove('open'); }
