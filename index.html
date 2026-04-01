@@ -605,8 +605,10 @@ function setupRealtimeListeners() {
 // ─── INIT Google Sheets ───
 function initFirebase() { // giữ tên cho compatibility
   if (!GS_URL || GS_URL.indexOf('DIEN_') === 0) {
-    console.warn('[GS] URL chưa được cấu hình');
+    console.warn('[GS] URL chưa được cấu hình – chạy offline');
+    firebaseOK = false;
     renderPage('dashboard');
+    toast('ℹ️ Chưa cấu hình Google Sheets – đang dùng localStorage');
     return;
   }
   // Kiểm tra kết nối
@@ -698,13 +700,18 @@ function doLogin() {
   document.getElementById('navSailenh').style.display = acc.role === 'dauMoi' ? '' : 'none';
 
   // Hiện loading trong khi sync Firebase
-  document.getElementById('mainContent').innerHTML =
-    '<div style="text-align:center;padding:60px;color:var(--bidv-blue)">'
-    +'<div style="font-size:32px;margin-bottom:12px">⏳</div>'
-    +'<div style="font-weight:600">Đang đồng bộ dữ liệu...</div>'
-    +'<div style="font-size:12px;color:var(--text-light);margin-top:6px">Vui lòng chờ giây lát</div>'
-    +'</div>';
-  initFirebase();
+  if (GS_URL && GS_URL.indexOf('DIEN_') < 0) {
+    document.getElementById('mainContent').innerHTML =
+      '<div style="text-align:center;padding:60px;color:var(--bidv-blue)">'
+      +'<div style="font-size:32px;margin-bottom:12px">⏳</div>'
+      +'<div style="font-weight:600">Đang kết nối Google Sheets...</div>'
+      +'<div style="font-size:12px;color:var(--text-light);margin-top:6px">Vui lòng chờ</div>'
+      +'</div>';
+    initFirebase();
+  } else {
+    firebaseOK = false;
+    renderPage('dashboard');
+  }
 }
 
 function showChangeRole() {
