@@ -513,7 +513,7 @@ tfoot td { background: #eef3fa; font-weight: 700; border-top: 2px solid var(--bi
 // ═══════════════════════════════════════════════════════════════
 // GOOGLE SHEETS BACKEND
 // ═══════════════════════════════════════════════════════════════
-var GS_URL    = 'https://script.google.com/macros/s/AKfycbw2Cpio1YOovJ8ITyO29hxT88I3Dgcs7MMDEhnN280gPjCAEUD3xcp5ElqzM5KXv8mioA/exec';
+var GS_URL    = 'https://script.google.com/macros/s/AKfycbz-5zHLA68_qFLzp3fqgKRDw28KHx-OG5hA-C_ykeyP_30ft5PcAW3PQN_AvYkC8AWUOg/exec';
 var GS_SECRET = 'bidvcampha2026';
 var firebaseOK = false;
 var db = null;
@@ -1440,16 +1440,18 @@ function saveDuBaoHDV2(input) {
   const donVi = currentUser.donVi;
   const key   = 'hdv_'+getKyKey()+'_'+donVi+'_'+dt;
   const d     = JSON.parse(storage.get(key)||'{}');
-  d[field]    = parseInput(input.value);
+  // Ghi chú lưu string, các trường số dùng parseInput
+  d[field] = (field === 'ghi_chu') ? input.value : parseInput(input.value);
   storage.set(key, JSON.stringify(d));
   // Cập nhật span tự tính
   const kkh_dau  = parseFloat(d.kkh_dau||0);
   const ckh_dau  = parseFloat(d.ckh_dau||0);
   const ckh_dh   = parseFloat(d.ckh_dh||0);
+  const rut_th   = parseFloat(d.rut_th||0);
   const bien_kkh = parseFloat(d.bien_kkh||0);
   const ckh_moi  = parseFloat(d.ckh_moi||0);
   const kkh_ck   = kkh_dau + bien_kkh;
-  const ckh_ck   = ckh_dau - ckh_dh + ckh_moi;
+  const ckh_ck   = ckh_dau - ckh_dh - rut_th + ckh_moi;
   var el;
   el = document.getElementById('hdv_kkh_ck_'+dt);  if(el) el.textContent = fmtCalc(kkh_ck);
   el = document.getElementById('hdv_ckh_ck_'+dt);  if(el) el.textContent = fmtCalc(ckh_ck);
@@ -1615,7 +1617,7 @@ function saveDuBaoCV2(input) {
   const donVi = currentUser.donVi;
   const key   = 'cv_'+getKyKey()+'_'+donVi+'_'+dt+'_'+kh;
   const d     = JSON.parse(storage.get(key)||'{}');
-  d[field]    = parseInput(input.value);
+  d[field] = (field === 'ghi_chu') ? input.value : parseInput(input.value);
   storage.set(key, JSON.stringify(d));
   const dn_ck = parseFloat(d.dn_dau||0) - parseFloat(d.den_han||0)
               - parseFloat(d.tra_th||0) + parseFloat(d.gn_ck||0) + parseFloat(d.gn_moi||0);
